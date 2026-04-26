@@ -1,0 +1,285 @@
+-- DDXpress schema + seed (MySQL / MariaDB)
+-- DB name: Ddxpress_db
+
+CREATE DATABASE IF NOT EXISTS Ddxpress_db
+  DEFAULT CHARACTER SET utf8mb4
+  DEFAULT COLLATE utf8mb4_general_ci;
+
+USE Ddxpress_db;
+
+SET FOREIGN_KEY_CHECKS = 0;
+
+DROP TABLE IF EXISTS parcel_status_history;
+DROP TABLE IF EXISTS parcel;
+DROP TABLE IF EXISTS payment;
+DROP TABLE IF EXISTS booking;
+DROP TABLE IF EXISTS service_type;
+DROP TABLE IF EXISTS staff;
+DROP TABLE IF EXISTS branch;
+DROP TABLE IF EXISTS customer;
+
+SET FOREIGN_KEY_CHECKS = 1;
+
+-- 1) Customer
+CREATE TABLE customer (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  full_name VARCHAR(120) NOT NULL,
+  email VARCHAR(190) NOT NULL UNIQUE,
+  password_hash VARCHAR(255) NOT NULL,
+  phone VARCHAR(40) NULL,
+  address VARCHAR(255) NULL,
+  created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+-- 2) Branch
+CREATE TABLE branch (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  name VARCHAR(120) NOT NULL,
+  address VARCHAR(255) NULL,
+  created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+-- 3) Staff (includes admin + rider)
+CREATE TABLE staff (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  full_name VARCHAR(120) NOT NULL,
+  email VARCHAR(190) NOT NULL UNIQUE,
+  password_hash VARCHAR(255) NOT NULL,
+  staff_role ENUM('staff','rider','admin') NOT NULL,
+  branch_id INT NULL,
+  is_active TINYINT(1) NOT NULL DEFAULT 1,
+  created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  CONSTRAINT fk_staff_branch FOREIGN KEY (branch_id) REFERENCES branch(id)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+-- 4) ServiceType
+CREATE TABLE service_type (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  name VARCHAR(120) NOT NULL,
+  base_fee DECIMAL(10,2) NOT NULL DEFAULT 0.00,
+  per_kg_fee DECIMAL(10,2) NOT NULL DEFAULT 0.00,
+  eta_days INT NOT NULL DEFAULT 2,
+  created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+-- 5) Booking
+CREATE TABLE booking (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  customer_id INT NOT NULL,
+  service_type_id INT NOT NULL,
+  origin_branch_id INT NOT NULL,
+  destination_branch_id INT NOT NULL,
+  sender_name VARCHAR(120) NOT NULL,
+  sender_phone VARCHAR(40) NULL,
+  sender_address VARCHAR(255) NULL,
+  receiver_name VARCHAR(120) NOT NULL,
+  receiver_phone VARCHAR(40) NULL,
+  receiver_address VARCHAR(255) NULL,
+  notes VARCHAR(255) NULL,
+  status ENUM('CREATED','PAID','IN_TRANSIT','DELIVERED','CANCELLED') NOT NULL DEFAULT 'CREATED',
+  created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  CONSTRAINT fk_booking_customer FOREIGN KEY (customer_id) REFERENCES customer(id),
+  CONSTRAINT fk_booking_service FOREIGN KEY (service_type_id) REFERENCES service_type(id),
+  CONSTRAINT fk_booking_origin FOREIGN KEY (origin_branch_id) REFERENCES branch(id),
+  CONSTRAINT fk_booking_dest FOREIGN KEY (destination_branch_id) REFERENCES branch(id)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+-- 6) Payment
+CREATE TABLE payment (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  booking_id INT NOT NULL,
+  amount DECIMAL(10,2) NOT NULL,
+  method ENUM('CASH','CARD','GCASH') NOT NULL DEFAULT 'CASH',
+  status ENUM('PENDING','PAID','FAILED','REFUNDED') NOT NULL DEFAULT 'PENDING',
+  paid_at DATETIME NULL,
+  created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  CONSTRAINT fk_payment_booking FOREIGN KEY (booking_id) REFERENCES booking(id)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+-- 7) Parcel
+CREATE TABLE parcel (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  booking_id INT NOT NULL,
+  tracking_number VARCHAR(32) NOT NULL UNIQUE,
+  description VARCHAR(255) NOT NULL,
+  declared_value DECIMAL(10,2) NOT NULL DEFAULT 0.00,
+  weight_kg DECIMAL(10,2) NOT NULL DEFAULT 0.00,
+  status ENUM(
+    'PENDING_DROP_OFF',
+    'PENDING_INSPECTION',
+    'DECLINED',
+    'READY_FOR_PICKUP',
+    'OUT_FOR_DELIVERY',
+    'IN_TRANSIT',
+    'DELIVERED'
+  ) NOT NULL DEFAULT 'PENDING_DROP_OFF',
+  current_branch_id INT NULL,
+  inspected_by_staff_id INT NULL,
+  assigned_rider_id INT NULL,
+  last_scan_at DATETIME NULL,
+  created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  CONSTRAINT fk_parcel_booking FOREIGN KEY (booking_id) REFERENCES booking(id),
+  CONSTRAINT fk_parcel_branch FOREIGN KEY (current_branch_id) REFERENCES branch(id),
+  CONSTRAINT fk_parcel_inspected_by FOREIGN KEY (inspected_by_staff_id) REFERENCES staff(id),
+  CONSTRAINT fk_parcel_rider FOREIGN KEY (assigned_rider_id) REFERENCES staff(id)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+-- 8) ParcelStatusHistory
+CREATE TABLE parcel_status_history (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  parcel_id INT NOT NULL,
+  status VARCHAR(40) NOT NULL,
+  branch_id INT NULL,
+  note VARCHAR(255) NULL,
+  created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  updated_by_staff_id INT NULL,
+  updated_by_rider_id INT NULL,
+  CONSTRAINT fk_hist_parcel FOREIGN KEY (parcel_id) REFERENCES parcel(id),
+  CONSTRAINT fk_hist_branch FOREIGN KEY (branch_id) REFERENCES branch(id),
+  CONSTRAINT fk_hist_staff FOREIGN KEY (updated_by_staff_id) REFERENCES staff(id),
+  CONSTRAINT fk_hist_rider FOREIGN KEY (updated_by_rider_id) REFERENCES staff(id)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+-- =====================================================
+-- SEED DATA
+-- =====================================================
+
+-- 🔹 BRANCHES (Expanded - 20 branches)
+INSERT INTO branch (name, address) VALUES
+-- Luzon (Mainland North)
+('Manila Main Hub', 'Manila'),
+('Quezon City Branch', 'Quezon City'),
+('Makati Branch', 'Makati'),
+('Taguig Branch', 'Taguig'),
+('Pasig Branch', 'Pasig'),
+('Mandaluyong Branch', 'Mandaluyong'),
+('Parañaque Branch', 'Parañaque'),
+('Las Piñas Branch', 'Las Piñas'),
+('Muntinlupa Branch', 'Muntinlupa'),
+('Caloocan Branch', 'Caloocan'),
+('Navotas Branch', 'Navotas'),
+('Malabon Branch', 'Malabon'),
+('Valenzuela Branch', 'Valenzuela'),
+('Marikina Branch', 'Marikina'),
+('Pateros Branch', 'Pateros'),
+('San Juan Branch', 'San Juan'),
+-- Visayas
+('Cebu City Branch', 'Cebu City'),
+('Mandaue Branch', 'Mandaue City'),
+('Lapu-Lapu Branch', 'Lapu-Lapu City'),
+-- Mindanao
+('Davao City Branch', 'Davao City'),
+('Cagayan de Oro Branch', 'Cagayan de Oro'),
+('Zamboanga Branch', 'Zamboanga City'),
+('General Santos Branch', 'General Santos'),
+('Butuan Branch', 'Butuan City'),
+('Iligan Branch', 'Iligan City'),
+('Cotabato Branch', 'Cotabato City'),
+-- North Luzon
+('Baguio City Branch', 'Baguio City'),
+('Dagupan Branch', 'Dagupan City'),
+('Tarlac Branch', 'Tarlac City'),
+('Cabanatuan Branch', 'Cabanatuan City'),
+('Angeles Branch', 'Angeles City'),
+('Olongapo Branch', 'Olongapo City'),
+('San Fernando Branch', 'San Fernando, La Union'),
+('Ilocos Norte Branch', 'Laoag City'),
+-- South Luzon
+('Batangas Branch', 'Batangas City'),
+('Laguna Branch', 'Santa Cruz, Laguna'),
+('Cavite Branch', 'Imus, Cavite'),
+('Rizal Branch', 'Antipolo City'),
+('Quezon Province Branch', 'Lucena City'),
+('Albay Branch', 'Legazpi City'),
+('Sorsogon Branch', 'Sorsogon City'),
+('Camarines Sur Branch', 'Naga City'),
+-- Visayas (more)
+('Iloilo City Branch', 'Iloilo City'),
+('Bacolod Branch', 'Bacolod City'),
+('Tacloban Branch', 'Tacloban City'),
+('Ormoc Branch', 'Ormoc City'),
+('Tagbilaran Branch', 'Tagbilaran City'),
+('Dumaguete Branch', 'Dumaguete City'),
+('Roxas Branch', 'Roxas City'),
+('Kalibo Branch', 'Kalibo, Aklan'),
+-- Palawan
+('Puerto Princesa Branch', 'Puerto Princesa City');
+
+-- 🔹 Service Types
+INSERT INTO service_type (name, base_fee, per_kg_fee, eta_days) VALUES
+('Standard', 80.00, 20.00, 3),
+('Express', 120.00, 30.00, 1),
+('Overnight', 200.00, 50.00, 1),
+('Economy', 50.00, 15.00, 5),
+('Same Day', 300.00, 80.00, 1);
+
+-- 🔹 Staff (bcrypt hash for "password")
+SET @HASH := '$2y$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi';
+
+INSERT INTO staff (full_name, email, password_hash, staff_role, branch_id) VALUES
+('Admin User', 'admin@ddxpress.test', @HASH, 'admin', 1),
+('Branch Staff', 'staff@ddxpress.test', @HASH, 'staff', 1),
+('Rider One', 'rider@ddxpress.test', @HASH, 'rider', 1),
+('Manila Hub Manager', 'manila.hub@ddxpress.test', @HASH, 'staff', 1),
+('Cebu Operations', 'cebu.ops@ddxpress.test', @HASH, 'staff', 17),
+('Davao Staff', 'davao.staff@ddxpress.test', @HASH, 'staff', 20),
+('Rider Two - QC', 'rider2.qc@ddxpress.test', @HASH, 'rider', 2),
+('Rider Three - Makati', 'rider3.makati@ddxpress.test', @HASH, 'rider', 3),
+('Super Admin', 'superadmin@ddxpress.test', @HASH, 'admin', 1);
+
+-- 🔹 Customers
+INSERT INTO customer (full_name, email, password_hash, phone, address) VALUES
+('Test Customer', 'customer@ddxpress.test', @HASH, '09171234567', 'Pasig City'),
+('John Doe', 'john.doe@example.com', @HASH, '09181234567', 'Makati City'),
+('Jane Smith', 'jane.smith@example.com', @HASH, '09191234567', 'Cebu City'),
+('Maria Santos', 'maria.santos@example.com', @HASH, '09201234567', 'Davao City'),
+('Peter Reyes', 'peter.reyes@example.com', @HASH, '09211234567', 'Quezon City'),
+('Anna Gonzales', 'anna.gonzales@example.com', @HASH, '09221234567', 'Baguio City'),
+('Mike Lee', 'mike.lee@example.com', @HASH, '09231234567', 'Iloilo City'),
+('Sarah Chen', 'sarah.chen@example.com', @HASH, '09241234567', 'Bacolod City'),
+('Carlos Mendoza', 'carlos.mendoza@example.com', @HASH, '09251234567', 'Taguig City');
+
+-- 🔹 Sample Bookings
+INSERT INTO booking (
+  customer_id, service_type_id, origin_branch_id, destination_branch_id,
+  sender_name, sender_phone, sender_address,
+  receiver_name, receiver_phone, receiver_address,
+  notes, status
+) VALUES
+(1, 1, 1, 2, 'Test Customer', '09171234567', 'Pasig City', 'Receiver A', '09998887777', 'Quezon City', 'Handle with care', 'PAID'),
+(2, 2, 3, 17, 'John Doe', '09181234567', 'Makati City', 'Maria Reyes', '09997776666', 'Cebu City', 'Fragile items', 'PAID'),
+(3, 1, 17, 20, 'Jane Smith', '09191234567', 'Cebu City', 'Ramon Cruz', '09996665555', 'Davao City', 'Deliver to office', 'CREATED'),
+(4, 3, 20, 1, 'Maria Santos', '09201234567', 'Davao City', 'Lisa Tan', '09995554444', 'Manila', 'Urgent delivery', 'PAID'),
+(5, 4, 2, 4, 'Peter Reyes', '09211234567', 'Quezon City', 'Kevin Lim', '09994443333', 'Makati City', 'Weekend delivery', 'IN_TRANSIT');
+
+-- 🔹 Payments
+INSERT INTO payment (booking_id, amount, method, status, paid_at) VALUES
+(1, 220.00, 'CASH', 'PAID', NOW()),
+(2, 450.00, 'CARD', 'PAID', NOW()),
+(3, 180.00, 'GCASH', 'PENDING', NULL),
+(4, 600.00, 'CARD', 'PAID', NOW()),
+(5, 250.00, 'CASH', 'PAID', NOW());
+
+-- 🔹 Parcels
+INSERT INTO parcel (booking_id, tracking_number, description, declared_value, weight_kg, status, current_branch_id, inspected_by_staff_id, assigned_rider_id)
+VALUES
+(1, 'DDX-000001', 'Shoes (1 pair)', 1500.00, 2.00, 'READY_FOR_PICKUP', 1, 2, 3),
+(1, 'DDX-000002', 'Books (3 pcs)', 900.00, 3.00, 'PENDING_INSPECTION', 1, NULL, NULL),
+(2, 'DDX-000003', 'Laptop', 45000.00, 2.50, 'IN_TRANSIT', 3, 2, 7),
+(2, 'DDX-000004', 'Phone accessories', 2000.00, 0.50, 'READY_FOR_PICKUP', 3, 2, 7),
+(3, 'DDX-000005', 'Clothing bundle', 3500.00, 4.00, 'PENDING_DROP_OFF', 17, NULL, NULL),
+(4, 'DDX-000006', 'Documents', 500.00, 0.30, 'OUT_FOR_DELIVERY', 20, 5, 8),
+(5, 'DDX-000007', 'Food items', 1200.00, 1.50, 'DELIVERED', 4, 4, 9),
+(5, 'DDX-000008', 'Toys', 800.00, 2.00, 'DELIVERED', 4, 4, 9);
+
+-- 🔹 Parcel Status History
+INSERT INTO parcel_status_history (parcel_id, status, branch_id, note, updated_by_staff_id, updated_by_rider_id)
+VALUES
+(1, 'READY_FOR_PICKUP', 1, 'Ready for rider pickup', 2, NULL),
+(2, 'PENDING_INSPECTION', 1, 'Awaiting staff inspection', 2, NULL),
+(3, 'IN_TRANSIT', 3, 'Parcel in transit to Cebu', 2, NULL),
+(4, 'READY_FOR_PICKUP', 3, 'Ready for pickup by rider', 2, NULL),
+(5, 'PENDING_DROP_OFF', 17, 'Awaiting drop-off at Cebu branch', NULL, NULL),
+(6, 'OUT_FOR_DELIVERY', 20, 'Rider is out for delivery', NULL, 8),
+(7, 'DELIVERED', 4, 'Successfully delivered to receiver', 4, 9),
+(8, 'DELIVERED', 4, 'Package received by customer', 4, 9);

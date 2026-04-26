@@ -1,0 +1,42 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>DDXpress - History Design</title>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=ADLaM+Display&display=swap">
+  <style>
+    body { background: #fafafa; font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif; }
+    h1, h3 { font-family: "ADLaM Display", serif; }
+    .history-card { background: #fff; border-radius: 20px; padding: 1.5rem; box-shadow: 0 5px 15px rgba(0,0,0,0.08); }
+    .tracking-code { background: #f0f0f0; color: #0d6efd; padding: 2px 8px; border-radius: 20px; font-family: monospace; display: inline-block; margin: 2px 0; }
+  </style>
+</head>
+<body>
+  <div class="container py-4">
+    <h1 class="mb-1">Booking History</h1>
+    <p class="text-muted mb-4">View all your past and current bookings.</p>
+    <div class="history-card">
+      <h3 class="mb-3">All Bookings</h3>
+      <div class="table-responsive">
+        <table class="table">
+          <thead><tr><th>Booking #</th><th>Route</th><th>Service</th><th>Tracking Numbers</th><th>Status</th><th>Payment</th><th>Created</th></tr></thead>
+          <tbody>
+            <tr>
+              <td><strong>#1201</strong></td><td>Manila → Cebu</td><td>Express</td>
+              <td><span class="tracking-code">DDX-4A91BC2D</span><br><span class="tracking-code">DDX-88FE0190</span></td>
+              <td><span class="badge bg-primary">IN TRANSIT</span></td><td><span class="badge bg-success">PAID</span></td><td>Apr 25, 2026 07:30 PM</td>
+            </tr>
+            <tr>
+              <td><strong>#1198</strong></td><td>Davao → Iloilo</td><td>Standard</td>
+              <td><span class="tracking-code">DDX-1198AA77</span></td>
+              <td><span class="badge bg-success">DELIVERED</span></td><td><span class="badge bg-warning text-dark">PENDING</span></td><td>Apr 23, 2026 01:15 PM</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</body>
+</html>
