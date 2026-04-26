@@ -4,7 +4,17 @@ A role-based parcel booking and tracking system built with PHP (MySQLi) and Boot
 
 ---
 
-## Setup Instructions
+## 🚀 Quick Start
+
+1. Clone or download the project to `C:\xampp\htdocs\DDXpress`
+2. Create the database and import the SQL file
+3. Start XAMPP (Apache + MySQL)
+4. Open `http://localhost/DDXpress/`
+5. Login using the seeded credentials below
+
+---
+
+## 📦 Setup Instructions
 
 ### 1. Create the Database
 
@@ -17,7 +27,7 @@ Then import the SQL file:
 sql
 USE DBXpress_db;
 SOURCE C:/xampp/htdocs/DDXpress/sql/ddxpress_schema_seed.sql;
-Or use phpMyAdmin to import sql/ddxpress_schema_seed.sql.
+Or use phpMyAdmin to import sql/ddxpress_schema_seed.sql
 
 2. Configure Database Connection
 The database credentials are set in config/db.php:
@@ -48,14 +58,11 @@ Staff	Inspection queue (accept/decline), view parcels, update status, scan parce
 Rider	Accept/decline deliveries, view assigned parcels, update status, scan, delivery notes
 Admin	Manage branches, service types, staff accounts, view bookings/parcels, generate reports
 🛠️ Tech Stack
-Backend: PHP (MySQLi)
-
-Frontend: Bootstrap Studio, Bootstrap 5
-
-Database: MySQL
-
-Server: XAMPP / Apache
-
+Category	Technologies
+Backend	PHP (MySQLi)
+Frontend	Bootstrap Studio, Bootstrap 5
+Database	MySQL
+Server	XAMPP / Apache
 📁 Project Structure
 text
 DDXpress/
@@ -76,17 +83,6 @@ Customer	Dashboard, Create Booking, Track Parcel, Booking History
 Staff	Inspection Queue, All Parcels, Update Status, Scan Parcel
 Rider	Available Parcels, My Parcels, Update Status, Scan
 Admin	Manage Branches, Service Types, Staff, Bookings, Reports
-🚀 Quick Start
-Clone or download the project to C:\xampp\htdocs\DDXpress
-
-Create the database and import the SQL file
-
-Start XAMPP (Apache + MySQL)
-
-Open http://localhost/DDXpress/
-
-Login using the seeded credentials above
-
 📝 Notes
 The system uses sessions for role-based access control
 
@@ -103,3 +99,7 @@ GitHub: danadepz
 
 📄 License
 This project is for educational/demonstration purposes.
+
+text
+
+## 
