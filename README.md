@@ -1,55 +1,6 @@
-# DDXpress (PHP + MySQLi)
-
-Role-based parcel booking + tracking demo app for XAMPP/Apache on Windows.
-
-## 1) Create the database
-
-In phpMyAdmin (or MySQL CLI), create:
-
-- **Database**: `Ddxpress_db`
-
-Then import:
-
-- `sql/ddxpress_schema_seed.sql`
-
-## 2) Configure DB connection
-
-The app uses:
-
-- `config/db.php`
-
-It is already set to:
-
-```php
-$conn = new mysqli("localhost","root","","Ddxpress_db");
-```
-
-## 3) Run the app
-
-Start **Apache** + **MySQL** in XAMPP, then open:
-
-- `http://localhost/DDXpress/`
-
-## Seeded logins
-
-Password for seeded users is: `password`
-
-- **Admin**: `admin@ddxpress.test`
-- **Staff**: `staff@ddxpress.test`
-- **Rider**: `rider@ddxpress.test`
-- **Customer**: `customer@ddxpress.test` (or register a new customer)
-
-## Pages
-
-- **Customer**: dashboard, create booking (multi-parcel), track parcel, booking history
-- **Staff**: inspection queue (accept/decline), view parcels, update status, scan
-- **Rider**: accept/decline, my parcels, update status, scan, delivered note
-- **Admin**: manage branches, service types, staff, view bookings/parcels, reports
-
-# DDXpress-Web
 # DDXpress - Parcel Delivery Management System
 
-A role-based parcel booking and tracking system built with PHP (MySQLi).
+A role-based parcel booking and tracking system built with PHP (MySQLi) and Bootstrap 5.
 
 ---
 
@@ -60,17 +11,20 @@ A role-based parcel booking and tracking system built with PHP (MySQLi).
 Using **phpMyAdmin** or **MySQL CLI**, create a database:
 
 ```sql
-CREATE DATABASE Ddxpress_db;
+CREATE DATABASE DBXpress_db;
 Then import the SQL file:
 
-sql/ddxpress_schema_seed.sql
+sql
+USE DBXpress_db;
+SOURCE C:/xampp/htdocs/DDXpress/sql/ddxpress_schema_seed.sql;
+Or use phpMyAdmin to import sql/ddxpress_schema_seed.sql.
 
 2. Configure Database Connection
-The database credentials are already set in config/db.php:
+The database credentials are set in config/db.php:
 
 php
-$conn = new mysqli("localhost", "root", "", "Ddxpress_db");
-If your MySQL has a password, update the third parameter accordingly.
+$conn = new mysqli("localhost", "root", "", "DBXpress_db");
+Note: If your MySQL has a password, update the third parameter accordingly.
 
 3. Run the Application
 Start Apache and MySQL in XAMPP, then open:
@@ -90,7 +44,7 @@ You can also register as a new customer.
 📂 Module Overview
 Role	Functions
 Customer	Dashboard, create booking (multi-parcel), track parcel, booking history
-Staff	Inspection queue (accept/decline), view parcels, update status, scan
+Staff	Inspection queue (accept/decline), view parcels, update status, scan parcel
 Rider	Accept/decline deliveries, view assigned parcels, update status, scan, delivery notes
 Admin	Manage branches, service types, staff accounts, view bookings/parcels, generate reports
 🛠️ Tech Stack
